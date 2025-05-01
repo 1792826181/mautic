@@ -1,0 +1,13 @@
+{#
+Expected variables:
+- title: string
+- value: int|string
+- subtitle: string|null
+#}
+
+<div class="panel-body text-center">
+    <span class="h1 d-block">{{ value }}</span>
+    {% if subtitle is defined %}
+        <p class="text-muted mb-0">{{ subtitle }}</p>
+    {% endif %}
+</div>

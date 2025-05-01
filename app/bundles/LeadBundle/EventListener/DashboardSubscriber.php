@@ -40,9 +40,10 @@ class DashboardSubscriber extends MainDashboardSubscriber
         'segments.build.time'     => [
             'formAlias' => DashboardSegmentsBuildTime::class,
         ],
-        'top.creators'  => [],
-        'top.owners'    => [],
-        'created.leads' => [],
+        'top.creators'    => [],
+        'top.owners'      => [],
+        'created.leads'   => [],
+        'number.contacts' => [],
     ];
 
     /**
@@ -60,7 +61,7 @@ class DashboardSubscriber extends MainDashboardSubscriber
         protected ListModel $leadListModel,
         protected RouterInterface $router,
         protected TranslatorInterface $translator,
-        protected DateHelper $dateHelper
+        protected DateHelper $dateHelper,
     ) {
     }
 
@@ -488,6 +489,20 @@ class DashboardSubscriber extends MainDashboardSubscriber
             }
 
             $event->setTemplate('@MauticCore/Helper/table.html.twig');
+            $event->stopPropagation();
+
+            return;
+        }
+
+        if ('number.contacts' == $event->getType()) {
+            if (!$event->isCached()) {
+                $event->setTemplateData([
+                    'value'    => $this->leadModel->getNumberContacts(),
+                    'subtitle' => $this->translator->trans('mautic.widget.number.contacts.description'),
+                ]);
+            }
+
+            $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
             $event->stopPropagation();
 
             return;

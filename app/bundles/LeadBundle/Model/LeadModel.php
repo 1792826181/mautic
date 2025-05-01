@@ -132,7 +132,7 @@ class LeadModel extends FormModel
         UrlGeneratorInterface $router,
         Translator $translator,
         UserHelper $userHelper,
-        LoggerInterface $mauticLogger
+        LoggerInterface $mauticLogger,
     ) {
         $this->leadFieldModel       = $leadFieldModel;
 
@@ -1811,6 +1811,29 @@ class LeadModel extends FormModel
         }
 
         return $chart->render();
+    }
+
+    public function getNumberContacts(): int
+    {
+        $anonymous = $this->translator->trans('mautic.lead.lead.searchcommand.isanonymous');
+        $mine      = $this->translator->trans('mautic.core.searchcommand.ismine');
+
+        $filter = [
+            'force' => " !$anonymous",
+        ];
+
+        if (!$this->security->isGranted('lead:leads:viewother')) {
+            $filter['force'] .= " $mine";
+        }
+
+        $results = $this->getEntities([
+            'start'          => 0,
+            'limit'          => 1,
+            'filter'         => $filter,
+            'withTotalCount' => true,
+        ]);
+
+        return $results['count'] ?? 0;
     }
 
     /**
