@@ -40,10 +40,11 @@ class DashboardSubscriber extends MainDashboardSubscriber
         'segments.build.time'     => [
             'formAlias' => DashboardSegmentsBuildTime::class,
         ],
-        'top.creators'    => [],
-        'top.owners'      => [],
-        'created.leads'   => [],
-        'number.contacts' => [],
+        'top.creators'            => [],
+        'top.owners'              => [],
+        'created.leads'           => [],
+        'number.contacts'         => [],
+        'segment.number.contacts' => [],
     ];
 
     /**
@@ -503,6 +504,70 @@ class DashboardSubscriber extends MainDashboardSubscriber
             }
 
             $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
+            $event->stopPropagation();
+
+            return;
+        }
+
+        if ('segment.number.contacts' == $event->getType()) {
+            if (!$event->isCached()) {
+                $limit = round((($event->getWidget()->getHeight() - 80) / 35) - 1);
+
+                // Get all segments the user is allowed to see
+                $segments = $this->leadListModel->getRepository()->getEntities();
+                $listIds  = [];
+                foreach ($segments as $segment) {
+                    $listIds[] = $segment->getId();
+                }
+
+                // Get contact counts
+                $leadCounts = (!empty($listIds)) ? $this->leadListModel->getSegmentContactCountFromCache($listIds) : [];
+
+                $items = [];
+
+                foreach ($segments as $segment) {
+                    $segmentId = $segment->getId();
+
+                    // Skip segments with no contacts
+                    if (!isset($leadCounts[$segmentId]) || (int) $leadCounts[$segmentId] <= 0) {
+                        continue;
+                    }
+
+                    $listUrl = $this->router->generate('mautic_segment_action', [
+                        'objectAction' => 'view',
+                        'objectId'     => $segmentId,
+                    ]);
+
+                    $row = [
+                        [
+                            'value' => $segment->getName(),
+                            'type'  => 'link',
+                            'link'  => $listUrl,
+                        ],
+                        [
+                            'value' => $leadCounts[$segmentId],
+                        ],
+                    ];
+
+                    $items[] = $row;
+
+                    // Stop once we've reached the limit
+                    if (count($items) >= $limit) {
+                        break;
+                    }
+                }
+
+                $event->setTemplateData([
+                    'headItems' => [
+                        'mautic.dashboard.label.title',
+                        'mautic.widget.number.contacts',
+                    ],
+                    'bodyItems' => $items,
+                    'raw'       => $segments,
+                ]);
+            }
+
+            $event->setTemplate('@MauticCore/Helper/table.html.twig');
             $event->stopPropagation();
 
             return;
