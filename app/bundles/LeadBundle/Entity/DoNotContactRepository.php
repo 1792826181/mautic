@@ -13,12 +13,24 @@ class DoNotContactRepository extends CommonRepository
 {
     use TimelineTrait;
 
+    public function getNumberEntries(): int
+    {
+        $q = $this->_em->getConnection()->createQueryBuilder();
+
+        $q->select('count(dnc.id) as dnc_count')
+            ->from(MAUTIC_TABLE_PREFIX.'lead_donotcontact', 'dnc');
+
+        $result = $q->executeQuery()->fetchOne();
+
+        return (int) $result;
+    }
+
     /**
      * Get a list of DNC entries based on channel and lead_id.
      *
      * @param string $channel
      *
-     * @return \Mautic\LeadBundle\Entity\DoNotContact[]
+     * @return DoNotContact[]
      */
     public function getEntriesByLeadAndChannel(Lead $lead, $channel)
     {

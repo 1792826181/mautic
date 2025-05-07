@@ -1836,6 +1836,14 @@ class LeadModel extends FormModel
         return $results['count'] ?? 0;
     }
 
+    public function getNumberDNC(): int
+    {
+        /** @var \Mautic\LeadBundle\Entity\DoNotContactRepository $dncRepo */
+        $dncRepo = $this->em->getRepository(DNC::class);
+
+        return $dncRepo->getNumberEntries();
+    }
+
     /**
      * Get pie chart data of dwell times.
      *

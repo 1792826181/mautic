@@ -45,6 +45,7 @@ class DashboardSubscriber extends MainDashboardSubscriber
         'created.leads'           => [],
         'number.contacts'         => [],
         'segment.number.contacts' => [],
+        'number.dnc.contacts'     => [],
     ];
 
     /**
@@ -496,12 +497,10 @@ class DashboardSubscriber extends MainDashboardSubscriber
         }
 
         if ('number.contacts' == $event->getType()) {
-            if (!$event->isCached()) {
-                $event->setTemplateData([
-                    'value'    => $this->leadModel->getNumberContacts(),
-                    'subtitle' => $this->translator->trans('mautic.widget.number.contacts.description'),
-                ]);
-            }
+            $event->setTemplateData([
+                'value'    => $this->leadModel->getNumberContacts(),
+                'subtitle' => $this->translator->trans('mautic.widget.number.contacts.description'),
+            ]);
 
             $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
             $event->stopPropagation();
@@ -568,6 +567,18 @@ class DashboardSubscriber extends MainDashboardSubscriber
             }
 
             $event->setTemplate('@MauticCore/Helper/table.html.twig');
+            $event->stopPropagation();
+
+            return;
+        }
+
+        if ('number.dnc.contacts' == $event->getType()) {
+            $event->setTemplateData([
+                'value'    => $this->leadModel->getNumberDNC(),
+                'subtitle' => $this->translator->trans('mautic.widget.number.dnc.contacts.description'),
+            ]);
+
+            $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
             $event->stopPropagation();
 
             return;
