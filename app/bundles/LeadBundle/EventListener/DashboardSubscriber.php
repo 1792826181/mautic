@@ -528,12 +528,19 @@ class DashboardSubscriber extends MainDashboardSubscriber
 
             $count = $leadCounts[$segmentId] ?? 0;
 
-            $event->setTemplateData([
-                'title'         => $selectedSegment->getName(),
-                'value'         => $count,
-                'subtitle'      => $this->translator->trans('mautic.widget.segment.number.contacts.description'),
-            ]);
-
+            if (null !== $selectedSegment) {
+                $event->setTemplateData([
+                    'title'    => $selectedSegment->getName(),
+                    'value'    => $count,
+                    'subtitle' => $this->translator->trans('mautic.widget.segment.number.contacts.description'),
+                ]);
+            } else {
+                $event->setTemplateData([
+                    'title'    => $this->translator->trans('Select a segment'),
+                    'value'    => $count,
+                    'subtitle' => $this->translator->trans('mautic.widget.segment.number.contacts.description'),
+                ]);
+            }
             $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
             $event->stopPropagation();
 
