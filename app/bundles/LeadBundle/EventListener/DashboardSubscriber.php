@@ -500,9 +500,12 @@ class DashboardSubscriber extends MainDashboardSubscriber
         }
 
         if ('number.contacts' == $event->getType()) {
+            $numContacts = $this->leadModel->getNumberContacts();
+            $subtitle    = $this->translator->trans('mautic.widget.number.contacts.description');
+
             $event->setTemplateData([
-                'value'    => $this->leadModel->getNumberContacts(),
-                'subtitle' => $this->translator->trans('mautic.widget.number.contacts.description'),
+                'value'    => $numContacts,
+                'subtitle' => $subtitle,
             ]);
 
             $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
@@ -515,8 +518,9 @@ class DashboardSubscriber extends MainDashboardSubscriber
             $params    = $event->getWidget()->getParams();
             $segmentId = $params['segmentId'] ?? null;
 
-            $segments        = $this->leadListModel->getRepository()->getEntities();
-            $selectedSegment = null;
+            $segmentRepository = $this->leadListModel->getRepository();
+            $segments          = $segmentRepository->getEntities();
+            $selectedSegment   = null;
 
             foreach ($segments as $segment) {
                 if ((int) $segment->getId() === (int) $segmentId) {
@@ -524,23 +528,28 @@ class DashboardSubscriber extends MainDashboardSubscriber
                 }
             }
 
-            $leadCounts = (!empty($segmentId)) ? $this->leadListModel->getSegmentContactCountFromCache([$segmentId]) : [];
+            if (!empty($segmentId)) {
+                $leadCounts = $this->leadListModel->getSegmentContactCountFromCache([$segmentId]);
+            } else {
+                $leadCounts = [];
+            }
 
             $count = $leadCounts[$segmentId] ?? 0;
 
+            $subtitle = $this->translator->trans('mautic.widget.segment.number.contacts.description');
+
             if (null !== $selectedSegment) {
-                $event->setTemplateData([
-                    'title'    => $selectedSegment->getName(),
-                    'value'    => $count,
-                    'subtitle' => $this->translator->trans('mautic.widget.segment.number.contacts.description'),
-                ]);
+                $title = $selectedSegment->getName();
             } else {
-                $event->setTemplateData([
-                    'title'    => $this->translator->trans('Select a segment'),
-                    'value'    => $count,
-                    'subtitle' => $this->translator->trans('mautic.widget.segment.number.contacts.description'),
-                ]);
+                $title = $this->translator->trans('Select a segment');
             }
+
+            $event->setTemplateData([
+                'title'    => $title,
+                'value'    => $count,
+                'subtitle' => $subtitle,
+            ]);
+
             $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
             $event->stopPropagation();
 
@@ -548,9 +557,12 @@ class DashboardSubscriber extends MainDashboardSubscriber
         }
 
         if ('number.dnc.contacts' == $event->getType()) {
+            $value    = $this->leadModel->getNumberDNC();
+            $subtitle = $this->translator->trans('mautic.widget.number.dnc.contacts.description');
+
             $event->setTemplateData([
-                'value'    => $this->leadModel->getNumberDNC(),
-                'subtitle' => $this->translator->trans('mautic.widget.number.dnc.contacts.description'),
+                'value'    => $value,
+                'subtitle' => $subtitle,
             ]);
 
             $event->setTemplate('@MauticCore/Helper/single_info.html.twig');

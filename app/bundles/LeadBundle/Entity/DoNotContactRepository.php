@@ -13,6 +13,9 @@ class DoNotContactRepository extends CommonRepository
 {
     use TimelineTrait;
 
+    /**
+     * Get number of DNC entries.
+     */
     public function getNumberEntries(): int
     {
         $q = $this->_em->getConnection()->createQueryBuilder();

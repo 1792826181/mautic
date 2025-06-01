@@ -1813,6 +1813,9 @@ class LeadModel extends FormModel
         return $chart->render();
     }
 
+    /**
+     * Get number of saved contacts.
+     */
     public function getNumberContacts(): int
     {
         $anonymous = $this->translator->trans('mautic.lead.lead.searchcommand.isanonymous');
@@ -1836,6 +1839,9 @@ class LeadModel extends FormModel
         return $results['count'] ?? 0;
     }
 
+    /**
+     * Get number of DNC contacts.
+     */
     public function getNumberDNC(): int
     {
         /** @var \Mautic\LeadBundle\Entity\DoNotContactRepository $dncRepo */
