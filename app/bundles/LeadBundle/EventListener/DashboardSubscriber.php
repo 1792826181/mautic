@@ -7,6 +7,7 @@ use Mautic\DashboardBundle\Event\WidgetDetailEvent;
 use Mautic\DashboardBundle\EventListener\DashboardSubscriber as MainDashboardSubscriber;
 use Mautic\LeadBundle\Form\Type\DashboardLeadsInTimeWidgetType;
 use Mautic\LeadBundle\Form\Type\DashboardLeadsLifetimeWidgetType;
+use Mautic\LeadBundle\Form\Type\DashboardSegmentContactsWidgetType;
 use Mautic\LeadBundle\Form\Type\DashboardSegmentsBuildTime;
 use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\LeadBundle\Model\ListModel;
@@ -44,7 +45,9 @@ class DashboardSubscriber extends MainDashboardSubscriber
         'top.owners'              => [],
         'created.leads'           => [],
         'number.contacts'         => [],
-        'segment.number.contacts' => [],
+        'segment.number.contacts' => [
+            'formAlias' => DashboardSegmentContactsWidgetType::class,
+        ],
         'number.dnc.contacts'     => [],
     ];
 
@@ -509,64 +512,29 @@ class DashboardSubscriber extends MainDashboardSubscriber
         }
 
         if ('segment.number.contacts' == $event->getType()) {
-            if (!$event->isCached()) {
-                $limit = round((($event->getWidget()->getHeight() - 80) / 35) - 1);
+            $params    = $event->getWidget()->getParams();
+            $segmentId = $params['segmentId'] ?? null;
 
-                // Get all segments the user is allowed to see
-                $segments = $this->leadListModel->getRepository()->getEntities();
-                $listIds  = [];
-                foreach ($segments as $segment) {
-                    $listIds[] = $segment->getId();
+            $segments        = $this->leadListModel->getRepository()->getEntities();
+            $selectedSegment = null;
+
+            foreach ($segments as $segment) {
+                if ((int) $segment->getId() === (int) $segmentId) {
+                    $selectedSegment = $segment;
                 }
-
-                // Get contact counts
-                $leadCounts = (!empty($listIds)) ? $this->leadListModel->getSegmentContactCountFromCache($listIds) : [];
-
-                $items = [];
-
-                foreach ($segments as $segment) {
-                    $segmentId = $segment->getId();
-
-                    // Skip segments with no contacts
-                    if (!isset($leadCounts[$segmentId]) || (int) $leadCounts[$segmentId] <= 0) {
-                        continue;
-                    }
-
-                    $listUrl = $this->router->generate('mautic_segment_action', [
-                        'objectAction' => 'view',
-                        'objectId'     => $segmentId,
-                    ]);
-
-                    $row = [
-                        [
-                            'value' => $segment->getName(),
-                            'type'  => 'link',
-                            'link'  => $listUrl,
-                        ],
-                        [
-                            'value' => $leadCounts[$segmentId],
-                        ],
-                    ];
-
-                    $items[] = $row;
-
-                    // Stop once we've reached the limit
-                    if (count($items) >= $limit) {
-                        break;
-                    }
-                }
-
-                $event->setTemplateData([
-                    'headItems' => [
-                        'mautic.dashboard.label.title',
-                        'mautic.widget.number.contacts',
-                    ],
-                    'bodyItems' => $items,
-                    'raw'       => $segments,
-                ]);
             }
 
-            $event->setTemplate('@MauticCore/Helper/table.html.twig');
+            $leadCounts = (!empty($segmentId)) ? $this->leadListModel->getSegmentContactCountFromCache([$segmentId]) : [];
+
+            $count = $leadCounts[$segmentId] ?? 0;
+
+            $event->setTemplateData([
+                'title'         => $selectedSegment->getName(),
+                'value'         => $count,
+                'subtitle'      => $this->translator->trans('mautic.widget.segment.number.contacts.description'),
+            ]);
+
+            $event->setTemplate('@MauticCore/Helper/single_info.html.twig');
             $event->stopPropagation();
 
             return;
