@@ -1904,14 +1904,7 @@ class LeadModel extends FormModel
             $filter['force'] .= " $mine";
         }
 
-        $results = $this->getEntities([
-            'start'          => 0,
-            'limit'          => 1,
-            'filter'         => $filter,
-            'withTotalCount' => true,
-        ]);
-
-        return $results['count'] ?? 0;
+        return $this->getRepository()->count($filter);
     }
 
     /**
@@ -1922,7 +1915,7 @@ class LeadModel extends FormModel
         /** @var \Mautic\LeadBundle\Entity\DoNotContactRepository $dncRepo */
         $dncRepo = $this->em->getRepository(DNC::class);
 
-        return $dncRepo->getNumberEntries();
+        return $dncRepo->count([]);
     }
 
     /**
